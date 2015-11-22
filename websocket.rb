@@ -114,6 +114,7 @@ EM.run {
 
     ws.onmessage { |msg|
       jmsg = JSON.parse(msg)
+      id = jmsg['id']
 
       case jmsg['path']
       when 'game.mode'

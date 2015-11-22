@@ -43,7 +43,7 @@ def set_mode(id, data, ws, games, users, game_counter)
     users[id]['game-id'] = found
 
     mazes = Dir.entries('maps')
-    mazes.select! { |maze| maze.start_with? '64_' }
+    mazes.select! { |maze| maze.start_with? '16_' }
 
     maze = []
     File.open(File.join('maps', mazes.sample)).each_with_index do |line, index|
@@ -119,7 +119,7 @@ end
 id_counter = 0
 
 EM.run {
-  EM::WebSocket.run(host: "localhost", port: 8080) do |ws|
+  EM::WebSocket.run(host: "0.0.0.0", port: 8080) do |ws|
 
     ws.onopen { |handshake|
       puts "WebSocket connection open"

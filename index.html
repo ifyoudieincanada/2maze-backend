@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <title>Test</title>
+    <script>
+function TwoSocket(url) {
+  var socket = new WebSocket(url);
+  var waiting = true;
+  var failed = false;
+  var queue = [];
+  var defaultPayload = {};
+
+  var count = 0;
+  var failure = setInterval(function() {
+    if (count == 5000/50) {
+      console.log("Connection not established");
+      failed = true;
+      clearInterval(failure);
+    }
+    count++;
+  }, 50);
+
+  socket.onmessage = function (event) {
+    clearInterval(failure);
+    jdata = JSON.parse(event.data);
+    if (jdata['status'] == 'connected') {
+      waiting = false;
+      defaultPayload['id'] = jdata['id'];
+    } else {
+      failed = true;
+      waiting = false;
+      console.log("Error: Response not expected:");
+      console.log(event.data);
+    }
+  }
+
+  var queueInterval = setInterval(function() {
+    if (!waiting) {
+      if (queue.length > 0) {
+        send = queue.shift();
+        send();
+      }
+    }
+
+    if (failed) {
+      clearInterval(queueInterval);
+    }
+  }, 25);
+
+  this.send = function(path, data, success, failure) {
+    if (failed) {
+      failure("Connection not established");
+      return;
+    }
+
+    payload = {
+      path: path,
+      data: data,
+      id: defaultPayload['id']
+    };
+
+    queue.push(function() {
+      waiting = true;
+
+      socket.send(JSON.stringify(payload));
+
+      var count = 0;
+      var timeout = setInterval(function() {
+        if (count == 1000/50) {
+          failure("Couldn't reach host");
+          waiting = false;
+          clearInterval(timeout);
+        }
+        count++;
+      }, 50);
+
+      socket.onmessage = function (event) {
+        clearInterval(timeout);
+        jdata = JSON.parse(event.data);
+        if (jdata['error']) {
+          failure(jdata['error']);
+        } else {
+          success(jdata);
+        }
+        waiting = false;
+      };
+    });
+  };
+}
+
+var proofOfConcept = new TwoSocket("ws://localhost:8080");
+
+var msg = {
+  type: 'message',
+  text: 'This is sample text',
+  id: 51,
+  date: Date.now()
+};
+
+proofOfConcept.send('game.ping', msg, function(response) {
+  console.log("Response: " + response['text']);
+}, function(error) {
+  console.log("Error: " + error);
+});
+    </script>
+  </head>
+  <body>
+  </body>
+</html>

@@ -48,7 +48,7 @@ function TwoSocket(url) {
     }
   }, 25);
 
-  this.send = function(path, data, success, failure) {
+  this.send = function(path, data) {
     if (failed) {
       failure("Connection not established");
       return;
@@ -78,11 +78,14 @@ function TwoSocket(url) {
       socket.onmessage = function (event) {
         clearInterval(timeout);
         jdata = JSON.parse(event.data);
+        var event;
         if (jdata['error']) {
-          failure(jdata['error']);
+          jdata['error'];
+          event = new CustomEvent('error', { detail: jdata['error'] })
         } else {
-          success(jdata);
+          event = new CustomEvent(jdata['name'], jdata['args']);
         }
+        document.dispatchEvent(event);
         waiting = false;
       };
     });
@@ -98,11 +101,7 @@ var msg = {
   date: Date.now()
 };
 
-proofOfConcept.send('game.ping', msg, function(response) {
-  console.log("Response: " + response['text']);
-}, function(error) {
-  console.log("Error: " + error);
-});
+proofOfConcept.send('game.ping', msg);
     </script>
   </head>
   <body>

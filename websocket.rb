@@ -41,22 +41,55 @@ def set_mode(id, data, ws, games, users, game_counter)
   else
     games[found]['p2'] = id
     users[id]['game-id'] = found
-    send(:game_ready, success, ws)
-    send(:game_ready, success, users[games[found]['p1']]['ws'])
+
+    mazes = Dir.entries('maps')
+    mazes.select! { |maze| maze.start_with? '64_' }
+
+    maze = []
+    File.open(File.join('maps', mazes.sample)).each_with_index do |line, index|
+      maze.push([])
+      line.each_char { |x| maze[index].push(x) }
+    end
+
+    unless maze.nil?
+      send(:game_ready, success.merge({ message: { maze: maze, player: 1 } }), ws)
+      send(:game_ready, success.merge({ message: { maze: maze, player: 2 } }), users[games[found]['p1']]['ws'])
+    end
   end
+end
+
+def save_maze(id, data, ws, games, users)
+  # return error('maze not set', ws) if data['maze'].nil?
+
+  # success = { message: 'maze saved' }
+
+  # mazes = Dir.entries('maps')
+  # mazes.select! { |maze| maze.startwith? '64_' }
+
+  # maze = []
+  # file.open(mazes.sample).each_with_index do |line, index|
+  #   maze.push([])
+  #   line.each_char { |x| maze[index] = x }
+  # end
+
+  # games[users[id]['game-id']]['maze'] = maze
+  send(:maze_saved, success, ws)
 end
 
 def stop_game(id, data, ws, games, users)
   game = games[users[id]['game-id']]
 
-  users[game['p1']]['game-id'] = nil
-  users[game['p2']]['game-id'] = nil
+  begin # this may be called by both clients, but should only work once
+    users[game['p1']]['game-id'] = nil
+    users[game['p2']]['game-id'] = nil
 
-  close = { message: 'Game Over' }
-  send(:disconnect, close, users[game['p1']]['ws'])
-  send(:disconnect, close, users[game['p2']]['ws'])
+    close = { message: 'Game Over' }
+    send(:disconnect, close, users[game['p1']]['ws'])
+    send(:disconnect, close, users[game['p2']]['ws'])
 
-  games.delete(users[id]['game-id'])
+    games.delete(users[id]['game-id'])
+  rescue
+  end
 end
 
 def coordinates(id, data, ws, games, users)
@@ -71,7 +104,7 @@ def coordinates(id, data, ws, games, users)
       y: data['y']
     }
   }
-  send(:coordinates, new_message, users[other_user_id])
+  send(:coordinates, new_message, users[other_user_id]['ws'])
 end
 
 def game_finder(uid, games)
@@ -123,6 +156,8 @@ EM.run {
         stop_game(id, jmsg['data'], ws, games, users)
       when 'game.coordinates'
         coordinates(id, jmsg['data'], ws, games, users)
+      when 'game.maze'
+        save_maze(id, jmsg['data'], ws, games, users)
       else
         error("Function #{jmsg['path']} not found", ws)
       end

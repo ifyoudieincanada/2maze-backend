@@ -60,7 +60,7 @@ def stop_game(id, data, ws, games, users)
 end
 
 def coordinates(id, data, ws, games, users)
-  return error('coordinates not valid') if data[:x].nil? || data[:y].nil?
+  return error('coordinates not valid', ws) if data[:x].nil? || data[:y].nil?
 
   game = games[users[id]['game-id']]
   other_user_id = id == game['p1'] ? game['p2'] : game['p1']

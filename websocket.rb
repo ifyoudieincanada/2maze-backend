@@ -120,6 +120,7 @@ id_counter = 0
 
 EM.run {
   EM::WebSocket.run(host: "0.0.0.0", port: 8080) do |ws|
+    puts "new ws"
 
     ws.onopen { |handshake|
       puts "WebSocket connection open"

@@ -37,9 +37,10 @@ module TwoMaze
 
     def stop!
       puts 'Stopping game'
-      send(0, :disconnect, { message: 'Game Over' })
+      send(1, :disconnect, { message: 'Game Over' })
       @websockets[:p1].clear_game!
       unless @websockets[:p2].nil?
+        send(2, :disconnect, { message: 'Game Over' })
         @websockets[:p2].clear_game!
       end
       @websockets[:p1] = nil

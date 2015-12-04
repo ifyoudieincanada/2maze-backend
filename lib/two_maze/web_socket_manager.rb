@@ -1,3 +1,5 @@
+require 'json'
+
 module TwoMaze
   class TwoMaze::WebSocketManager
     def initialize
@@ -25,11 +27,13 @@ module TwoMaze
     end
 
     def remove(websocket)
-      @users.delete websocket.id
+      @users.delete(websocket.id)
     end
 
     def add_to_game(websocket)
+      puts 'Adding user to game'
       if @games[:open][websocket.level].empty?
+        puts "@games[:open][#{websocket.level}] is empty"
         game = Game.new(websocket, websocket.level)
 
         websocket.in_game(game)
@@ -37,13 +41,18 @@ module TwoMaze
         @games[:open][websocket.level][game.id] = game
       else
         begin
-          game = games[:open][websocket.level].first
-          @games[:open][websocket.level].delete game.id
+          puts "@games[:open][#{websocket.level}] is not empty"
+          id, game = @games[:open][websocket.level].first
+          @games[:open][websocket.level].delete(id)
 
           websocket.in_game(game)
 
-          @games[:full][websocket.level][game.id] = game
+          @games[:full][websocket.level][id] = game
+          @games[:full][websocket.level][id].add(websocket)
+
+          puts 'game put in :full'
         rescue
+          puts 'Rescuing'
           game = Game.new(websocket, websocket.level)
 
           websocket.in_game(game)
@@ -54,13 +63,15 @@ module TwoMaze
     end
 
     def remove_from_game(websocket)
+      puts 'Ending game'
+      websocket.game_over!
+
       if websocket.game.started?
         @games[:full][websocket.level].delete websocket.game.id
       else
         @games[:open][websocket.level].delete websocket.game.id
       end
-
-      websocket.game_over!
+      puts 'Game ended'
     end
   end
 end

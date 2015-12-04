@@ -10,6 +10,7 @@ module TwoMaze
     end
 
     def initialize(ws, manager)
+      puts 'Creating Websocket User'
       @websocket = ws
       @manager = manager
       @player = nil
@@ -18,13 +19,14 @@ module TwoMaze
       onmessage
       onerror
       onclose
+      puts 'User Created'
     end
 
     def id
       @user_id
     end
 
-    def level(level)
+    def set_level(level)
       @level = level.to_sym
     end
 
@@ -32,7 +34,7 @@ module TwoMaze
       @level
     end
 
-    def player(player) # should be 1 or 0
+    def set_player(player) # should be 1 or 0
       @player = player
     end
 
@@ -57,7 +59,7 @@ module TwoMaze
     end
 
     def game_over!
-      @game.stop!
+      @game.stop! if in_game?
     end
 
     def send_error(msg)
@@ -72,19 +74,22 @@ module TwoMaze
 
     def onopen
       @websocket.onopen { |handshake|
+        puts 'Opening connection'
         @user_id = WebSocket.id_counter
         @manager.add(self)
         @websocket.send JSON.generate({ status: 'connected', id: @user_id })
+        puts 'Connection opened'
       }
     end
 
     def onmessage
       @websocket.onmessage { |msg|
+        puts 'Got message'
         jmsg = JSON.parse(msg)
 
         case jmsg['path']
         when 'game.mode'
-          @level = jmsg['data']['mode']
+          set_level(jmsg['data']['mode'])
           unless @level.nil?
             @manager.add_to_game(self)
           end
@@ -102,23 +107,28 @@ module TwoMaze
         else
           send_error("Function #{jmsg['path']} not found")
         end
+        puts 'Message handled'
       }
     end
 
     def onerror
       @websocket.onerror { |reason|
+        puts 'Got error'
         if defined? reason
           puts reason
           send_error(reason)
         end
+        puts 'Error handled'
       }
     end
 
     def onclose
       @websocket.onclose { |reason|
+        puts 'Closing connection'
         game_over! if in_game?
         puts reason if defined? reason
         @manager.remove(self)
+        puts 'Connection closed'
       }
     end
   end

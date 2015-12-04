@@ -7,18 +7,20 @@ module TwoMaze
     end
 
     def initialize(websocket, level)
+      puts 'New game'
       @game_id = Game.counter
       @level = level
       @websockets = {
         p1: websocket
       }
-      websocket.player(1)
+      websocket.set_player(1)
 
       @ready = false
-      preapre_maze
+      prepare_maze
       @active = false
 
       send(1, :game_created, { message: "game with mode #{@level} created" })
+      puts 'New game initialized'
     end
 
     def id
@@ -34,6 +36,7 @@ module TwoMaze
     end
 
     def stop!
+      puts 'Stopping game'
       send(0, :disconnect, { message: 'Game Over' })
       @websockets[:p1].clear_game!
       unless @websockets[:p2].nil?
@@ -42,6 +45,7 @@ module TwoMaze
       @websockets[:p1] = nil
       @websockets[:p2] = nil
       @active = false
+      puts 'Game stopped'
     end
 
     def send(id, name, data)
@@ -58,17 +62,22 @@ module TwoMaze
     end
 
     def add(websocket)
+      puts 'Adding websocket to game'
       if @websockets[:p2].nil?
-        websocket.player(2)
+        websocket.set_player(2)
         @websockets[:p2] = websocket
 
         if @ready
+          puts 'ready'
           send(1, :game_ready, { message: { maze: @maze, player: 1 } })
           send(2, :game_ready, { message: { maze: @maze, player: 2 } })
+        else
+          puts 'not ready'
         end
       else
         # throw an error because the game is already full
       end
+      puts 'Websocket added'
     end
 
     def remove(websocket) # shouldn't be used
@@ -91,7 +100,7 @@ module TwoMaze
       @maze = []
       File.open(File.join('maps', mazes.sample)).each_with_index do |line, index|
         @maze.push([])
-        line.each_char { |x| maze[index].push(x) }
+        line.each_char { |x| @maze[index].push(x) }
       end
 
       @ready = true

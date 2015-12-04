@@ -1,7 +1,7 @@
 require 'json'
 
 module TwoMaze
-  class WebSocket
+  class TwoMaze::WebSocket
 
     def WebSocket.id_counter
       @count ||= 0
@@ -13,6 +13,11 @@ module TwoMaze
       @websocket = ws
       @manager = manager
       @player = nil
+
+      onopen
+      onmessage
+      onerror
+      onclose
     end
 
     def id
@@ -62,6 +67,8 @@ module TwoMaze
     def send(name, args)
       @websocket.send JSON.generate({ name: name, args: args })
     end
+
+    private
 
     def onopen
       @websocket.onopen { |handshake|

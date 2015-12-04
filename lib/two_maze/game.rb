@@ -1,5 +1,5 @@
 module TwoMaze
-  class Game
+  class TwoMaze::Game
     def Game.counter
       @counter ||= 0
       @counter += 1

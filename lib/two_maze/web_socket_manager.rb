@@ -1,5 +1,5 @@
 module TwoMaze
-  class WebSocketManager
+  class TwoMaze::WebSocketManager
     def initialize
       @games = {
         open: {
@@ -14,6 +14,10 @@ module TwoMaze
         }
       }
       @users = {}
+    end
+
+    def socket(ws)
+      WebSocket.new(ws, self)
     end
 
     def add(websocket)

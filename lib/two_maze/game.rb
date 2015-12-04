@@ -28,6 +28,8 @@ module TwoMaze
     end
 
     def start!
+      send(1, :game_ready, { message: { maze: @maze, player: 1 } })
+      send(2, :game_ready, { message: { maze: @maze, player: 2 } })
       @active = true
     end
 
@@ -70,8 +72,7 @@ module TwoMaze
 
         if @ready
           puts 'ready'
-          send(1, :game_ready, { message: { maze: @maze, player: 1 } })
-          send(2, :game_ready, { message: { maze: @maze, player: 2 } })
+          start!
         else
           puts 'not ready'
         end

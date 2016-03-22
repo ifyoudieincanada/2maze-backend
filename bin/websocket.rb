@@ -1,4 +1,6 @@
-$LOAD_PATH.unshift("#{File.dirname(__FILE__)}/../lib")
+#!/usr/bin/env ruby
+
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 
 require 'two_maze'
 require 'em-websocket'
